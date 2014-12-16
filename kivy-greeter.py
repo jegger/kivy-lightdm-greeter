@@ -4,8 +4,9 @@ from kivy.app import App
 from kivy.support import install_gobject_iteration
 from kivy.lang import Builder
 from kivy.core.window import Window
+from kivy.config import Config
 
-#from gi.repository import LightDM
+from gi.repository import LightDM
 
 kv = '''
 FloatLayout:
@@ -15,7 +16,7 @@ FloatLayout:
     AnchorLayout:
         BoxLayout:
             size_hint: None, None
-            size: 700, 280
+            size: 800, 280
             info_label: info_label
             orientation: 'vertical'
             GridLayout:
@@ -27,6 +28,7 @@ FloatLayout:
                     valing: 'left'
                     text_size: self.size
                     font_size: 40
+                    size_hint_x: 0.4
                 Spinner:
                     id: session_spinner
                     font_size: 40
@@ -37,6 +39,7 @@ FloatLayout:
                     valing: 'left'
                     text_size: self.size
                     font_size: 40
+                    size_hint_x: 0.4
                 Spinner:
                     id: username_spinner
                     font_size: 40
@@ -47,6 +50,7 @@ FloatLayout:
                     valing: 'left'
                     text_size: self.size
                     font_size: 40
+                    size_hint_x: 0.4
                 TextInput:
                     id: password_input
                     text: ""
@@ -81,24 +85,31 @@ class GreeterApp(App):
         super(GreeterApp, self).__init__(**kwargs)
         self.password = ""
         self.session = ""
-
-        self.available_sessions = ["kde-plasma", "pbase"]
-        self.available_users = ["rentouch", "hansli"]
-        self.root_widget = Builder.load_string(kv)
-        self.root_widget.username_spinner.values = self.available_users
-        self.root_widget.session_spinner.values = self.available_sessions
-
-    def build(self):
+        
+        # Connect to lightDM
         install_gobject_iteration()
-        """self.greeter = LightDM.Greeter()
+        self.greeter = LightDM.Greeter()
         self.greeter.connect("authentication-complete", self.authentication_complete_cb)
         self.greeter.connect("show-prompt", self.show_prompt_cb)
         self.greeter.connect_sync()
-        sessions =  LightDM.get_sessions()
-        for sess in sessions:
-            print LightDM.Session.get_name(sess)
-            """
+        
+        # Get all available sessions
+        available_sessions = []
+        for sess in LightDM.get_sessions():
+            available_sessions.append(LightDM.Session.get_key(sess))
+        
+        # Get all available users
+        available_users = []
+        inst = LightDM.UserList.get_instance()
+        for user in LightDM.UserList.get_users(inst):
+            user_name = LightDM.User.get_name(user)
+            available_users.append(user_name)
 
+        self.root_widget = Builder.load_string(kv)
+        self.root_widget.username_spinner.values = available_users
+        self.root_widget.session_spinner.values = available_sessions
+        
+    def build(self):
         return self.root_widget
 
     def login(self, username, password, session):
@@ -114,9 +125,8 @@ class GreeterApp(App):
 
     def authentication_complete_cb(self, greeter):
         if greeter.get_is_authenticated():
-            session = "kde-plasma"
-            if not greeter.start_session_sync(session):
-                self.root_widget.info_label.text = "Error while starting session %s" % session
+            if not greeter.start_session_sync(self.session):
+                self.root_widget.info_label.text = "Error while starting session %s" % self.session
             else:
                 print >> sys.stderr, "AUTH COMPLETED"
                 self.root_widget.info_label.text = ":-)"
@@ -127,5 +137,9 @@ class GreeterApp(App):
 
 
 if __name__ == '__main__':
+    # set keyboard to onscreen
+    Config.set('kivy', 'keyboard_mode', 'systemandmulti')
+    Config.write()
+    
     Window.clearcolor = (0.4274509804, 0.4274509804, 0.4274509804, 1)
     GreeterApp().run()

@@ -22,7 +22,7 @@ Installation
 
 Debuging
 ========
-'lightdm –test-mode --debug' => kivy logs are in: $HOME/.cache/lightdm/log/x-1-greeter.log
+'lightdm --test-mode --debug' => kivy logs are in: $HOME/.cache/lightdm/log/x-1-greeter.log
 
 
 Credits / More information
