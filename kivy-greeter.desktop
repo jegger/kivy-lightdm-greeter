@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Kivy greeter
+Comment=Demo kivy greeter
+Exec=kivy-greeter.py
+Type=Application
